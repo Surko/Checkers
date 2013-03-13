@@ -15,6 +15,10 @@ public :
 	enum Side { SIDE_BLACK = BLACK , SIDE_WHITE = WHITE};
 	Cell cell(int x, int y) const;
 	std::pair<int, int> selectedCell() const;
+	bool isMyTurn() const;
+	bool isSinglePlayer() const;
+	void setMode(bool single);
+	void moveBlack();
 	void selectCell(int x, int y);
 	void move(int x, int y);
 	void getLegalMoves(Side side, std::vector<Move> &moves) const;
@@ -24,4 +28,6 @@ private :
 	Board board;
 	int selectedX;
 	int selectedY;
+	bool myTurn;
+	bool single;
 };

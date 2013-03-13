@@ -22,6 +22,18 @@ std::pair<int, int> Game::selectedCell() const {
 	return std::make_pair(selectedX, selectedY);
 }
 
+bool Game::isMyTurn() const {
+	return myTurn;
+}
+
+bool Game::isSinglePlayer() const {
+	return single;
+}
+
+void Game::setMode(bool single) {
+	this->single = single;
+}
+
 void Game::selectCell(int x, int y) {
 	if ((x>=0)&&(x<8)&&(y<8)&&(y>=0)&&(board[x][y]==WHITE)) {
 
@@ -55,8 +67,40 @@ void Game::getLegalMoves(Side side, std::vector<Move> &moves) const {
 
 				}
 
+				const int dx[] = {-1, 1, 1, -1};
+				const int dy[] = {-1, -1, 1, 1};
+
+				for (int d = 0; d < 4; d++) {
+					const int xx = x + dx[d];
+					const int yy = y + dy[d];
+
+					if (xx < 0 || xx >=8) continue;
+					if (yy >= 8 || yy >=8) continue;
+					if (board[xx][yy] == EMPTY || board[xx][yy] == (Cell)side) continue;
+
+					// Jumped x and y positions
+					const int xj = x + 2 * dx[d];
+					const int yj = y + 2 * dy[d];
+
+					if (xj < 0 || xj >=8) continue;
+					if (yj < 0 || yj >=8) continue;
+
+					if (board[xx][yy] == EMPTY) {
+						Move move;
+						move.push_back(Step(Pos(x,y),Pos(xj,yj)));
+						moves.push_back(move);
+					}
+
+				}
+
 			}
 				
+}
+
+void Game::moveBlack() {
+
+
+
 }
 
 void Game::move(int x, int y) {
@@ -70,6 +114,11 @@ void Game::move(int x, int y) {
 		if (iter->front() == step) {
 			board[selectedX][selectedY] = EMPTY;
 			board[x][y] = WHITE;
+			if (abs(selectedX - x) == 2)
+				board[(selectedX + x) / 2][(selectedY + y) / 2] = EMPTY;
+
+			myTurn = false;
+			
 		}
 	}
 	

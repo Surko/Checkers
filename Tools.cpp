@@ -95,5 +95,6 @@ public :
 
 private :
 	static Tools * instance;
-
+	static SOCKADDR_IN addr;
+	static SOCKET sConnect;
 };

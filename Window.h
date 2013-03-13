@@ -29,6 +29,6 @@ public :
 	virtual void mouse(int btn, int state, int x, int y) = 0;
 
 	static int STATE;
-	static void changeState();
+	static void changeState(bool single);
 };
 

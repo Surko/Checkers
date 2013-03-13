@@ -2,8 +2,8 @@
 #include "GameWindow.h"
 
 
-GameWindow::GameWindow() {		
-
+GameWindow::GameWindow(bool single) {		
+	game.setMode(single);
 }
 
 	
@@ -51,7 +51,11 @@ void GameWindow::display() {
 			}
 			glEnd();
 			break;
-		}	
+		}
+		if (!game.isMyTurn()) {
+			Tools * tool = Tools::getInstance();	
+			tool->displayText(WIDTH / 2 - 100, HEIGHT / 2, 50, 0, 0, "ENEMY TURN");
+		}
 	}
 
 	glutSwapBuffers();
@@ -70,7 +74,14 @@ void GameWindow::mouse(int btn, int state, int x, int y) {
 			game.selectCell(_x, _y);
 		}
 		else {
-			game.move(_x, _y);
+			if (game.isMyTurn()) {
+				game.move(_x, _y);
+			} else {
+
+				if (game.isSinglePlayer()) {
+					game.moveBlack();
+				}
+			}
 		}			
 		glutPostRedisplay();
 	}

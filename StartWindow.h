@@ -2,6 +2,8 @@
 #include "Tools.cpp"
 #include <string>
 
+static const int BUTTON_COUNTER = 3;
+
 struct Button {
 public :
 	const char * name;
@@ -37,7 +39,8 @@ public :
 	void mouse(int btn, int state, int x, int y);
 	static void join();
 	static void exit();
+	static void create();
 
 private : 
-	Button buttons[2];
+	Button buttons[BUTTON_COUNTER];
 };

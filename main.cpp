@@ -1,4 +1,3 @@
-
 #include "glut.h"
 #include "GameWindow.h"
 #include "StartWindow.h"
@@ -8,10 +7,10 @@
 
 Window * win;
 
-int Window::STATE = CONNECTWINDOW;
+int Window::STATE = GAMEWINDOW;
 Tools * Tools::instance = new Tools();
 
-void Window::changeState() {
+void Window::changeState(bool single) {
 	delete(win);
 		switch (STATE) {
 			case 0 :
@@ -20,7 +19,7 @@ void Window::changeState() {
 				win =  new StartWindow();
 			break;
 			case 2 : 
-				win = new GameWindow();
+				win = new GameWindow(single);				
 			break;
 			case 3 :
 				win = new ConnectWindow();
@@ -49,7 +48,7 @@ int main(int argc, char ** argv) {
 		win =  new StartWindow();
 		break;
 	case 2 : 
-		win = new GameWindow();
+		win = new GameWindow(true);
 		break;
 	case 3 :
 		win = new ConnectWindow();
