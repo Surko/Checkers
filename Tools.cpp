@@ -1,19 +1,10 @@
 #pragma once
-// Hladanie linkerom kniznicu Ws2_32.lib
-#pragma comment(lib, "Ws2_32.lib")
-#include <sdkddkver.h>
-
-#include <WinSock2.h>
-#include <Windows.h>
-
 #include <string>
 #include <iostream>
 #include "glut.h"
 
 using namespace std;
 
-static const char * hostname = "127.0.0.1";
-static const int port = 5000;
 /**
 * Singleton trieda TextTools. Ma za ulohu vsetky operacie s textom.
 * Pomocou metody getInstance ziskame instanciu TextTool. Ziskavame hu tak ze definujeme staticku
@@ -24,6 +15,7 @@ static const int port = 5000;
 class Tools {
 
 public :
+
 	/**
 	* Metoda getInstance vrati odkaz na objekt typu TextTool.
 	*/
@@ -48,53 +40,6 @@ public :
 		}
 	}
 
-	int tryConnect() {
-		char message[200];
-		std::string strmessage;
-	
-		long answer;
-		WSAData wsaData;
-		WORD dll_version;
-		dll_version = MAKEWORD(2,1);
-		answer = WSAStartup(dll_version, &wsaData);
-	
-		if (answer) {
-			return 0;
-		}
-	
-		SOCKADDR_IN addr;
-		int adrlen = sizeof(addr);
-	
-		SOCKET sConnection = socket(AF_INET, SOCK_STREAM, NULL);
-		if (sConnection == INVALID_SOCKET) {
-			return 0;
-		}
-		
-		addr.sin_addr.s_addr = inet_addr(hostname);
-		addr.sin_family = AF_INET;
-		addr.sin_port = htons(port);
-	
-		std::cout << "Connecting ..." << std::endl;
-	
-		if (connect(sConnection, (SOCKADDR *)&addr,sizeof(addr))==SOCKET_ERROR) {
-			std::cout << "Socket Error" << std::endl;	
-			return 0;
-		} else {
-			std::cout << "CONNECTED" << std::endl;
-			int ID;
-			char * cID = new char[64];
-			ZeroMemory(cID, 64);
-	
-			recv(sConnection, cID, 64, NULL);
-			ID = atoi(cID);
-			printf("You are client No:%d", ID);
-		}
-	
-		return 1;
-	}
-
 private :
 	static Tools * instance;
-	static SOCKADDR_IN addr;
-	static SOCKET sConnect;
 };

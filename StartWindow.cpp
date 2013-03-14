@@ -38,6 +38,10 @@ void StartWindow::display() {
 		glutSwapBuffers();
 }
 
+void StartWindow::update() {
+
+}
+
 void StartWindow::keyboard(unsigned char c, int x, int y) {
 }
 
@@ -53,19 +57,19 @@ if (state == GLUT_UP) {
 }
 	
 void StartWindow::join() {
-	std::cout << "join";
+	std::cout << "Join";
 	STATE = 3;
 	
-	changeState(false);
+	changeState(0, false);
 }
 void StartWindow::exit() {
 	std::cout << "Exit";
 	STATE = 0;
-	changeState(false);
+	changeState(0, false);
 }
 
 void StartWindow::create() {
 	std::cout << "Create";
 	STATE = 2;
-	changeState(true);
+	changeState(1, true);
 }

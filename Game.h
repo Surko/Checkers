@@ -1,6 +1,7 @@
 
 #include <utility>
 #include <vector>
+#include <sstream>
 
 
 typedef std::pair<int, int> Pos;
@@ -18,9 +19,10 @@ public :
 	bool isMyTurn() const;
 	bool isSinglePlayer() const;
 	void setMode(bool single);
-	void moveBlack();
+	void setSide(bool side);
+	void moveOther();
 	void selectCell(int x, int y);
-	void move(int x, int y);
+	void move(int x, int y, std::vector<std::string> &msg);
 	void getLegalMoves(Side side, std::vector<Move> &moves) const;
 	void getJumpMoves() const;
 private :
@@ -30,4 +32,5 @@ private :
 	int selectedY;
 	bool myTurn;
 	bool single;
+	Side side;
 };

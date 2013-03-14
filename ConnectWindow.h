@@ -2,6 +2,9 @@
 #include "Tools.cpp"
 #include <string>
 
+static const char * hostname = "127.0.0.1";
+static const int port = 5000;
+
 class ConnectWindow : public Window {
 
 public :
@@ -9,7 +12,9 @@ public :
 	void display();
 	void keyboard(unsigned char c, int x, int y);
 	void mouse(int btn, int state, int x, int y);
-
+	void update();
+	string receiveMsg();
+	int tryConnect();
 private :
 	std::string text[4];
 	int wheelCount;

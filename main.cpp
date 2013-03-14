@@ -1,16 +1,23 @@
 #include "glut.h"
+#include "Tools.cpp"
 #include "GameWindow.h"
 #include "StartWindow.h"
 #include "ConnectWindow.h"
 #include <iostream>
 #include <string>
 
+// Omedzenie vykonu procesoru (nebezi naplno)
+static const int FPS_PROHIBITOR = 10;
 Window * win;
 
-int Window::STATE = GAMEWINDOW;
+int Window::STATE = STARTWINDOW;
+bool Window::connected = false;
 Tools * Tools::instance = new Tools();
+SOCKADDR_IN Window::addr;
+SOCKET Window::sConnection;
+int Window::connID = 0;
 
-void Window::changeState(bool single) {
+void Window::changeState(bool side, bool single) {
 	delete(win);
 		switch (STATE) {
 			case 0 :
@@ -19,7 +26,7 @@ void Window::changeState(bool single) {
 				win =  new StartWindow();
 			break;
 			case 2 : 
-				win = new GameWindow(single);				
+				win = new GameWindow(side, single);				
 			break;
 			case 3 :
 				win = new ConnectWindow();
@@ -40,6 +47,11 @@ void mouse(int btn, int state, int x, int y) {
 	win->mouse(btn, state, x, y);
 }
 
+void update() {
+	win->update();
+	Sleep(FPS_PROHIBITOR);
+}
+
 int main(int argc, char ** argv) {	
 	switch (Window::STATE) {
 	case 0 :
@@ -48,7 +60,7 @@ int main(int argc, char ** argv) {
 		win =  new StartWindow();
 		break;
 	case 2 : 
-		win = new GameWindow(true);
+		win = new GameWindow(0, true);
 		break;
 	case 3 :
 		win = new ConnectWindow();
@@ -66,6 +78,7 @@ int main(int argc, char ** argv) {
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
 	glutMouseFunc(mouse);	
+	glutIdleFunc(update);
 
 	glutMainLoop();
 

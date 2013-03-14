@@ -1,6 +1,12 @@
 #pragma once
+// Hladanie linkerom kniznicu Ws2_32.lib
+#pragma comment(lib, "Ws2_32.lib")
+#include <sdkddkver.h>
 
+#include <WinSock2.h>
+#include <Windows.h>
 #include "glut.h"
+#include <sstream>
 #include <iostream>
 
 #define GAMEWINDOW 2
@@ -22,13 +28,24 @@ static const int radius = 30;
 
 static const float DEG2RAD = 3.14159/180;
 
+struct Buffer
+{
+	int ID;
+	char Message[256];
+};
+
 class Window {
 public : 
 	virtual void display() = 0;
 	virtual void keyboard(unsigned char c, int x, int y) = 0;
 	virtual void mouse(int btn, int state, int x, int y) = 0;
+	virtual void update() = 0;
 
 	static int STATE;
-	static void changeState(bool single);
+	static void changeState(bool side, bool single);
+	static bool connected;
+	static SOCKADDR_IN addr;
+	static SOCKET sConnection;
+	static int connID;
 };
 

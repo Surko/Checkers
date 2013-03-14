@@ -34,8 +34,12 @@ void Game::setMode(bool single) {
 	this->single = single;
 }
 
+void Game::setSide(bool side) {
+	this->side = side == 0 ? SIDE_BLACK : SIDE_WHITE;
+}
+
 void Game::selectCell(int x, int y) {
-	if ((x>=0)&&(x<8)&&(y<8)&&(y>=0)&&(board[x][y]==WHITE)) {
+	if ((x>=0)&&(x<8)&&(y<8)&&(y>=0)&&(board[x][y]==side)) {
 
 		selectedX = x;
 		selectedY = y;
@@ -85,7 +89,7 @@ void Game::getLegalMoves(Side side, std::vector<Move> &moves) const {
 					if (xj < 0 || xj >=8) continue;
 					if (yj < 0 || yj >=8) continue;
 
-					if (board[xx][yy] == EMPTY) {
+					if (board[xj][yj] == EMPTY) {
 						Move move;
 						move.push_back(Step(Pos(x,y),Pos(xj,yj)));
 						moves.push_back(move);
@@ -93,36 +97,57 @@ void Game::getLegalMoves(Side side, std::vector<Move> &moves) const {
 
 				}
 
-			}
-				
+			}				
 }
 
-void Game::moveBlack() {
+void Game::moveOther() {
+	Side other = side == SIDE_WHITE ? SIDE_BLACK : SIDE_WHITE;
+	std::vector<Move> legalMoves;
+	getLegalMoves(other, legalMoves);
+	Move & move = legalMoves[rand() % legalMoves.size()];
+	for (Move::iterator iter = move.begin(); iter != move.end(); iter++) {
+		board[iter->first.first][iter->first.second] = EMPTY;
+		board[iter->second.first][iter->second.second] = (Cell)other;
 
+		// vymazanie toho co nepriatel preskocil
+		if (abs(iter->second.first - iter->first.first) == 2)
+			board[(iter->first.first + iter->second.first)/2][(iter->first.second + iter->second.second)/2] = EMPTY;
 
+	}
+	myTurn = true;
 
 }
 
-void Game::move(int x, int y) {
+void Game::move(int x, int y, std::vector<std::string> &msg) {
 
 	std::vector<Move> legalMoves;
-	getLegalMoves(SIDE_WHITE, legalMoves);
+	getLegalMoves(side, legalMoves);
 
 	Step step = Step(Pos(selectedX, selectedY),Pos(x, y));
 
 	for (std::vector<Move>::iterator iter = legalMoves.begin(); iter != legalMoves.end(); iter++) {
 		if (iter->front() == step) {
 			board[selectedX][selectedY] = EMPTY;
-			board[x][y] = WHITE;
-			if (abs(selectedX - x) == 2)
-				board[(selectedX + x) / 2][(selectedY + y) / 2] = EMPTY;
+			board[x][y] = (Cell)side;
+			std::stringstream ss;
+			ss << "MOVE " << selectedX << " " << selectedY << " " <<
+				x + " " + y;					
+			msg.push_back(ss.str());
 
-			myTurn = false;
-			
+			// vymazanie toho co sme preskocili
+			if (abs(selectedX - x) == 2) {
+				board[(selectedX + x) / 2][(selectedY + y) / 2] = EMPTY;
+				ss.clear();
+				ss << "DELETE " << (selectedX + x) / 2 << " " << (selectedY + y) / 2;
+				msg.push_back(ss.str());
+			}
+			selectedX = -1;
+			selectedY = -1;
+			myTurn = false;						
 		}
 	}
 	
 	selectedX = -1;
 	selectedY = -1;
-
+	return ;
 }

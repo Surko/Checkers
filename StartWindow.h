@@ -37,6 +37,7 @@ public :
 	void display();
 	void keyboard(unsigned char c, int x, int y);
 	void mouse(int btn, int state, int x, int y);
+	void update();
 	static void join();
 	static void exit();
 	static void create();
