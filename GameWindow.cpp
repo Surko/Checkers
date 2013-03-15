@@ -72,16 +72,30 @@ void GameWindow::display() {
 void GameWindow::update() {
 
 	if (!game.isSinglePlayer()) {
-		istringstream iss(receiveMsg());
+		if (!msgQueue.empty()) {
+		istringstream iss(msgQueue.back());
+		msgQueue.pop_back();
+		cout << "Translating msg" << endl;
 		string msg;
 		iss >> msg;
+		cout << "Command : " << msg << endl;
 		if (msg == "MOVE") {
-
-			return;
+			int sx,sy,ex,ey;
+			iss >> sx;
+			iss >> sy;
+			iss >> ex;
+			iss >> ey;
+			cout << "	Positions [" << sx << "," << sy << "," << ex << "," << ey << "]" << endl;
+			game.move(sx, sy, ex,ey);
+			game.setTurn(true);
 		}
 		if (msg == "DELETE") {
-
-			return;
+			int x,y;
+			iss >> x;
+			iss >> y;
+			game.del(x,y);
+		}		
+		glutPostRedisplay();
 		}
 	}
 
@@ -93,40 +107,23 @@ void GameWindow::update() {
 	}
 }
 
-string GameWindow::receiveMsg() {
-
-	Buffer sbuffer;
-	char buffer[sizeof(sbuffer)] = {0};
-	if (recv(sConnection, buffer, sizeof(sbuffer), NULL)) {
-		memcpy(&sbuffer, buffer, sizeof(sbuffer));
-			cout << "Player " << sbuffer.ID << " -> " << sbuffer.Message << endl;
-			connID = sbuffer.ID;
-	}
-
-	return sbuffer.Message;
-}
-
 
 void GameWindow::keyboard(unsigned char c, int x, int y) {
 
 }
 
-void GameWindow::sendMsg(const char *msg) {
+void GameWindow::sendMsg(string & msg) {
 	cout << "Sending Message" << endl;
-	Buffer sbuffer;
-	sbuffer.ID = connID;
-	ZeroMemory(sbuffer.Message, 256);
-	memcpy(sbuffer.Message, msg, 256);
-	char * sendMsg = new char[256];
-	memcpy(sendMsg, &sbuffer, sizeof(Buffer));
+	char * sendMsg = new char[256];	
+	ZeroMemory(sendMsg, 256);
+	memcpy(sendMsg, msg.c_str(), msg.size());	
 
-	if (send(sConnection, sendMsg, sizeof(Buffer), NULL)) {
-			cout << "Message -> " << sbuffer.Message << " sent" << endl;
+	if (send(sConnection, sendMsg, 256, NULL)) {
+			cout << "Message -> " << sendMsg << " sent" << endl;
 	}
 }
 
 void GameWindow::mouse(int btn, int state, int x, int y) {
-	std::cout << state;
 	if (state == GLUT_UP) {
 		int _x = x / (WIDTH / 8);
 		int _y = y / (HEIGHT / 8);
@@ -139,7 +136,7 @@ void GameWindow::mouse(int btn, int state, int x, int y) {
 				game.move(_x, _y, msg);
 				if (!game.isSinglePlayer()) {
 					for (vector<string>::iterator iter = msg.begin(); iter != msg.end(); iter++) {						
-						sendMsg(iter->c_str());
+						sendMsg(*iter);
 					}
 				}
 			}
@@ -152,4 +149,6 @@ Game * GameWindow::getGame() {
 	return &game;
 }
 
-
+string GameWindow::toString() {
+	return string("Game Window");
+}

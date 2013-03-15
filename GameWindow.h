@@ -12,8 +12,8 @@ public :
 	void keyboard(unsigned char c, int x, int y);
 	void mouse(int btn, int state, int x, int y);
 	void update();
-	void sendMsg(const char *msg);
-	string receiveMsg();
+	void sendMsg(string & msg);
+	string toString();
 private : 
 	Game game;
 };

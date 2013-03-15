@@ -57,19 +57,24 @@ if (state == GLUT_UP) {
 }
 	
 void StartWindow::join() {
-	std::cout << "Join";
+	std::cout << "Button : Join" << std::endl;
 	STATE = 3;
 	
 	changeState(0, false);
 }
 void StartWindow::exit() {
-	std::cout << "Exit";
+	std::cout << "Button : Exit" << std::endl;
 	STATE = 0;
 	changeState(0, false);
 }
 
 void StartWindow::create() {
-	std::cout << "Create";
+	std::cout << "Button : Create" << std::endl;
 	STATE = 2;
 	changeState(1, true);
+}
+
+
+string StartWindow::toString() {
+	return string("Start Window");
 }

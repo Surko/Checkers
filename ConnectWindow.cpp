@@ -21,38 +21,32 @@ void ConnectWindow::display() {
 
 void ConnectWindow::update() {
 	Tools * tool = Tools::getInstance();
-	if (tryConnect()) {
-		connected = true;
-		// zmenenie na GameWindow
-		STATE = 2;
-		// ziskaj spravu ked sme napojeny
-		// prekladanie spravy
-		string msg = receiveMsg();
-		istringstream iss(msg);			
-		iss >> msg;
-		iss >> msg;
-		bool side = atoi(msg.c_str());
-		// Je to multiplayer takze parameter v changeState bude false
-		changeState(side, false);
-		// Zavola aby OpenGL prekreslilo
-		glutPostRedisplay();
-	} else {
-		// Ked sa nepodari tak zavola vykreslenie podla metody display v tomto connectWindow.
-		glutPostRedisplay();
+	if (!connected) {
+		if (tryConnect()) {
+		connected = true;			
+		} else {
+			// Ked sa nepodari tak zavola vykreslenie podla metody display v tomto connectWindow.
+			// ziskaj spravu ked sme napojeny
+			// prekladanie spravy
+			glutPostRedisplay();
+		}
+	} else {				
+		if (!msgQueue.empty()) {	
+			// zmenenie na GameWindow	
+			STATE = 2;
+			string msg = msgQueue.back();
+			msgQueue.pop_back();
+			cout << msg << endl;
+			istringstream iss(msg);			
+			iss >> msg;
+			iss >> msg;
+			bool side = atoi(msg.c_str());
+			cout << "Your side: " << (side == true ? "WHITE" : "BLACK") << endl;
+			// Je to multiplayer takze parameter v changeState bude false
+			changeState(side, false);
+			glutPostRedisplay();
+		}
 	}
-}
-
-string ConnectWindow::receiveMsg() {
-
-	Buffer sbuffer;
-	char buffer[sizeof(sbuffer)] = {0};
-	if (recv(sConnection, buffer, sizeof(sbuffer), NULL)) {
-		memcpy(&sbuffer, buffer, sizeof(sbuffer));
-			cout << "Player " << sbuffer.ID << " -> " << sbuffer.Message << endl;
-			connID = sbuffer.ID;
-	}
-
-	return sbuffer.Message;
 }
 
 int ConnectWindow::tryConnect() {
@@ -86,9 +80,10 @@ int ConnectWindow::tryConnect() {
 			std::cout << "Socket Error" << std::endl;	
 			return 0;
 		} else {
-			std::cout << "CONNECTED" << std::endl;			
+			std::cout << "CONNECTED" << std::endl;	
+			CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE) receiveMsg, NULL, NULL, NULL);
 		}
-	
+		
 		return 1;
 }
 
@@ -102,3 +97,6 @@ void ConnectWindow::keyboard(unsigned char c, int x, int y) {
 }
 
 
+string ConnectWindow::toString() {
+	return string("Connect Window");
+}

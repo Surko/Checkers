@@ -13,8 +13,8 @@ public :
 	void keyboard(unsigned char c, int x, int y);
 	void mouse(int btn, int state, int x, int y);
 	void update();
-	string receiveMsg();
 	int tryConnect();
+	string toString();
 private :
 	std::string text[4];
 	int wheelCount;

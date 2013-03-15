@@ -15,7 +15,9 @@ bool Window::connected = false;
 Tools * Tools::instance = new Tools();
 SOCKADDR_IN Window::addr;
 SOCKET Window::sConnection;
+vector<string> Window::msgQueue;
 int Window::connID = 0;
+
 
 void Window::changeState(bool side, bool single) {
 	delete(win);
@@ -32,6 +34,26 @@ void Window::changeState(bool side, bool single) {
 				win = new ConnectWindow();
 			break;
 		}
+		cout << win->toString() << endl;
+}
+
+DWORD Window::receiveMsg() {
+
+	Buffer sbuffer;
+	char buffer[sizeof(sbuffer)] = {0};
+
+	while (STATE > 0) {
+		cout << "	" <<  win ->toString() << " waiting for msg" << endl;
+		if (recv(sConnection, buffer, sizeof(sbuffer), NULL)) {
+			cout << "	Message arrived" << endl;
+			memcpy(&sbuffer, buffer, 256);
+			cout << "	[" << sbuffer.ID << "] -> " << sbuffer.Message << endl;			
+			msgQueue.push_back(sbuffer.Message);
+		} 
+	}
+	return 0;
+
+
 }
 
 

@@ -38,6 +38,10 @@ void Game::setSide(bool side) {
 	this->side = side == 0 ? SIDE_BLACK : SIDE_WHITE;
 }
 
+void Game::setTurn(bool turn) {
+	this->myTurn = turn;
+}
+
 void Game::selectCell(int x, int y) {
 	if ((x>=0)&&(x<8)&&(y<8)&&(y>=0)&&(board[x][y]==side)) {
 
@@ -118,6 +122,17 @@ void Game::moveOther() {
 
 }
 
+void Game::move(int sx, int sy, int ex, int ey) {
+
+	board[sx][sy] = EMPTY;
+	board[ex][ey] = (side == SIDE_WHITE ? BLACK : WHITE);
+
+}
+
+void Game::del(int x, int y) {
+	board[x][y] = EMPTY;
+}
+
 void Game::move(int x, int y, std::vector<std::string> &msg) {
 
 	std::vector<Move> legalMoves;
@@ -130,14 +145,13 @@ void Game::move(int x, int y, std::vector<std::string> &msg) {
 			board[selectedX][selectedY] = EMPTY;
 			board[x][y] = (Cell)side;
 			std::stringstream ss;
-			ss << "MOVE " << selectedX << " " << selectedY << " " <<
-				x + " " + y;					
+			ss << "MOVE " << selectedX << " " << selectedY << " " << x << " " << y;					
 			msg.push_back(ss.str());
 
 			// vymazanie toho co sme preskocili
 			if (abs(selectedX - x) == 2) {
 				board[(selectedX + x) / 2][(selectedY + y) / 2] = EMPTY;
-				ss.clear();
+				std::stringstream ss;
 				ss << "DELETE " << (selectedX + x) / 2 << " " << (selectedY + y) / 2;
 				msg.push_back(ss.str());
 			}

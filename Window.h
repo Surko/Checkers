@@ -8,11 +8,15 @@
 #include "glut.h"
 #include <sstream>
 #include <iostream>
+#include <vector>
+#include <string>
 
 #define GAMEWINDOW 2
 #define STARTWINDOW 1
 #define CONNECTWINDOW 3
 #define EXIT 0
+
+using namespace std;
 
 static const int WIDTH = 600;
 static const int HEIGHT = 600;
@@ -40,12 +44,14 @@ public :
 	virtual void keyboard(unsigned char c, int x, int y) = 0;
 	virtual void mouse(int btn, int state, int x, int y) = 0;
 	virtual void update() = 0;
-
+	virtual std::string toString() = 0;
 	static int STATE;
 	static void changeState(bool side, bool single);
+	static DWORD receiveMsg();
+	static vector<string> msgQueue;
 	static bool connected;
 	static SOCKADDR_IN addr;
 	static SOCKET sConnection;
-	static int connID;
+	static int connID;	
 };
 

@@ -20,9 +20,12 @@ public :
 	bool isSinglePlayer() const;
 	void setMode(bool single);
 	void setSide(bool side);
+	void setTurn(bool turn);
 	void moveOther();
 	void selectCell(int x, int y);
 	void move(int x, int y, std::vector<std::string> &msg);
+	void move(int sx, int sy, int ex, int ey);
+	void del(int x, int y);
 	void getLegalMoves(Side side, std::vector<Move> &moves) const;
 	void getJumpMoves() const;
 private :
