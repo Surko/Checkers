@@ -1,15 +1,24 @@
 #include <math.h>
 #include "GameWindow.h"
 
-typedef std::pair<int, int> Pos;
-typedef std::pair<Pos, Pos> Step;
-
+/*
+Konstruktor na GameWindow ktora nastavi podla parametrov side a single samotnu hru.
+Side - Strana za ktoru hrame.
+Single - Ci hrame singleplayer alebo multiplayer.
+*/
 GameWindow::GameWindow(bool side, bool single) {		
 	game.setMode(single);
 	game.setSide(side);
 }
 
-	
+/*
+Display funkcia pre GameWindow. Sklada sa z vykreslenia plochy 8x8 a vykreslenia
+kamenov podla toho ako su ulozene v Game::board
+Podla paru selected vykresli oznaceny kamen (nacerveno).
+Pri necakanom odpojeni vykresli na prostred Server is down.
+Pri konci hry vykresli na prostred konecny stav (vyhra/prehra/remiza)
+Pri cudzom tahu vypise na prostred Enemy turn.
+*/
 void GameWindow::display() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	std::pair<int , int> selected = game.selectedCell();
@@ -60,22 +69,60 @@ void GameWindow::display() {
 			glEnd();
 			break;
 		}
-		if (!game.isMyTurn()) {
-			Tools * tool = Tools::getInstance();	
-			tool->displayText(WIDTH / 2 - 100, HEIGHT / 2, 50, 0, 0, "ENEMY TURN");
+
+		if (!connected && !game.isSinglePlayer()) {
+			Tools * tool = Tools::getInstance();
+			tool -> displayText(WIDTH / 2 - 100, HEIGHT / 2, 50, 0, 0, "SERVER IS DOWN");
+		} 
+
+		if (game.isEnd()) {			
+			Tools * tool = Tools::getInstance();
+			switch (game.getWinStatus()) {
+			case -1 : 
+				tool -> displayText(WIDTH / 2 - 100, HEIGHT / 2, 50, 0, 0, "REMIZA");
+				break;
+			case 0 :
+				tool -> displayText(WIDTH / 2 - 100, HEIGHT / 2, 50, 0, 0, "YOU LOSE");
+				break;
+			case 1 :
+				tool -> displayText(WIDTH / 2 - 100, HEIGHT / 2, 50, 0, 0, "YOU WON");
+				break;
+			}
+		} else {
+			if (!game.isMyTurn()) {
+				Tools * tool = Tools::getInstance();	
+				tool->displayText(WIDTH / 2 - 100, HEIGHT / 2, 50, 0, 0, "ENEMY TURN");
+			}
 		}
+		
 	}
 
 	glutSwapBuffers();
 }
 
-void GameWindow::update() {
+/*
+Update funkcia pre GameWindow. Sklada sa z kontrolovania poctu kamenov (co nie je dolezite lebo tuto funkciu zabezpeci aj 
+ta v Game) a z kontrolovania fronty zprav ktore prisli. Do konzoli vzdy vypise co za sprava prisla.
+Command podla ktoreho sa rozhoduje co so spravou spravi. Ked sme v singleplayer mode tak 
+iba prepina medzi hracovym tahom a PC tahom.
+*/
+void GameWindow::update() {	
 
 	if (!game.isSinglePlayer()) {
+		if (game.getStones() == 0) {
+			game.hasEnded();
+			game.setWinStatus(0);
+			std::stringstream ss;
+			ss << "FINAL " << 0;
+			sendMsg(ss.str());				
+		}		
+
 		if (!msgQueue.empty()) {
-		istringstream iss(msgQueue.back());
-		msgQueue.pop_back();
+		istringstream iss(msgQueue.front());
+		msgQueue.erase(msgQueue.begin());
+
 		cout << "Translating msg" << endl;
+
 		string msg;
 		iss >> msg;
 		cout << "Command : " << msg << endl;
@@ -94,7 +141,38 @@ void GameWindow::update() {
 			iss >> x;
 			iss >> y;
 			game.del(x,y);
-		}		
+			game.decStones();			
+		}	
+		if (msg == "FINAL") {
+			int x;
+			iss >> x;
+			
+			stringstream ss;
+			ss << "FINAL " << game.getStones();
+			sendMsg(ss.str());
+
+			game.hasEnded();
+			if (x < game.getStones()) {				
+				game.setWinStatus(1);
+			}
+			if (x == game.getStones()) {			
+				game.setWinStatus(-1);
+			}
+			if (x > game.getStones()) {
+				game.setWinStatus(0);
+			}
+			
+			STATE = -10;
+			closesocket(sConnection);
+		}
+
+		if (msg == "RUNAWAY") {
+			game.hasEnded();
+			game.setWinStatus(1);
+			
+			STATE = -10;
+		}
+
 		glutPostRedisplay();
 		}
 	}
@@ -107,11 +185,30 @@ void GameWindow::update() {
 	}
 }
 
-
+/*
+Keyboard funkcia v GameWindow spracovava eventy s klavesnice. V tomto pripade spracovavame iba priznak ESC, ktory naznacuje
+ze ukoncujeme sedenie. Informacie sa vypisu na obrazovku a vratime sa do StartWindow.
+*/
 void GameWindow::keyboard(unsigned char c, int x, int y) {
+	
+
+	if (c == VK_ESCAPE) {			
+		if (!game.isSinglePlayer()) {
+			cout << "DISCONNECTING" << endl;			
+		}		
+
+		STATE = 1;
+		changeState(false,false);
+		glutPostRedisplay();
+		closesocket(sConnection);
+	}
 
 }
 
+/*
+Metoda sendMsg posiela spravu na server. Telo spravi ukaze v konzoli.
+Parameter metody je string/sprava ktoru hned odposiela.
+*/
 void GameWindow::sendMsg(string & msg) {
 	cout << "Sending Message" << endl;
 	char * sendMsg = new char[256];	
@@ -123,6 +220,11 @@ void GameWindow::sendMsg(string & msg) {
 	}
 }
 
+/*
+Mouse funkcia v GameWindow spracovava eventy s mysi. Zaujimame sa iba o stlacenie mysi (prave/lave).
+Pri stlaceni na kamen sa kamen oznaci. Pri dalsom stlaceni na plochu posunie kamen.
+Pri multiplayer verzii posiela spravy ziskanie z metody move priamo na server ktore spracovava druha strana
+*/
 void GameWindow::mouse(int btn, int state, int x, int y) {
 	if (state == GLUT_UP) {
 		int _x = x / (WIDTH / 8);
@@ -133,11 +235,9 @@ void GameWindow::mouse(int btn, int state, int x, int y) {
 		else {
 			if (game.isMyTurn()) {
 				vector<string> msg;
-				game.move(_x, _y, msg);
-				if (!game.isSinglePlayer()) {
-					for (vector<string>::iterator iter = msg.begin(); iter != msg.end(); iter++) {						
-						sendMsg(*iter);
-					}
+				game.move(_x, _y, msg);				
+				for (vector<string>::iterator iter = msg.begin(); iter != msg.end(); iter++) {						
+					sendMsg(*iter);
 				}
 			}
 		}			
@@ -145,10 +245,16 @@ void GameWindow::mouse(int btn, int state, int x, int y) {
 	}
 }
 
+/*
+Metoda getGame vrati prisluchajucu hru.
+*/
 Game * GameWindow::getGame() {
 	return &game;
 }
 
+/*
+Metoda vrati string s menom Windovu.
+*/
 string GameWindow::toString() {
 	return string("Game Window");
 }

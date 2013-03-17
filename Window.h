@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 
+// Definovane Windowy.
 #define GAMEWINDOW 2
 #define STARTWINDOW 1
 #define CONNECTWINDOW 3
@@ -18,20 +19,30 @@
 
 using namespace std;
 
+// Sirka a vyska displeju
 static const int WIDTH = 600;
 static const int HEIGHT = 600;
 
+// Sirka vyska a odsadenie tlacidiel.
 static const int BTN_WIDTH = 300;
 static const int BTN_HEIGHT = 50;
 static const int BTN_INSET = 20;
 
+// Zaciatocne pozicie prveho tlacidla
 static const int BTN_STARTX = 150;
 static const int BTN_STARTY = (HEIGHT - BTN_HEIGHT) / 2;
 
+// Polomer kamena
 static const int radius = 30;
 
+// Float na prevadzanie stupnov na radiany.
 static const float DEG2RAD = 3.14159/180;
 
+/*
+Buffer - Stavba spravy ktora prichadza.
+ID - id hraca/PC od ktoreho sprava prisla
+Message - samotna sprava
+*/
 struct Buffer
 {
 	int ID;

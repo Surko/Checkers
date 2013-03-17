@@ -1,47 +1,114 @@
 #include "Game.h"
 
+/*
+Konstruktor pre hru. Nastavenie poctu kamenov na 0 a ostatnych 
+private premennych v Game na pocitatocne hodnoty.
+Nastavenie plochy podla metody getStonePositions kde sa vyuziva Positioning.
+*/
 Game::Game() {
+	stones = 0;
+	endGame = false;
+	winStatus = 0;
 	selectedX = -1;
 	selectedY = -1;
 	for (int x = 0; x < 8; ++x)
 		for (int y = 0; y < 8; y++)
 			board[x][y] = EMPTY;
-	for (int y = 0; y < 2; ++y)
-		for (int x = (y+1) % 2; x < 8; x += 2)
-			board[x][y] = BLACK;
-	for (int y = 6; y < 8; ++y)
-		for (int x = (y+1) % 2; x < 8; x += 2)
-			board[x][y] = WHITE;
+	getStonePositions(BLACK, NORMAL, 0, 2);
+	getStonePositions(WHITE, NORMAL, 6, 8);
 }
 
+/*
+Metoda getStonePositions nastavi pozicie kamenov na ploche podla preurceneho rozlozenia.
+Mozne doplnit o rozne rozlozenia alebo zmenit uz vytvorene.
+*/
+void Game::getStonePositions(Cell cell, Positioning type, int sy, int ey) {
+	switch (type) {
+	case NORMAL :
+		for (int y = sy; y < ey; ++y)
+			for (int x = (y+1) % 2; x < 8; x += 2)
+				board[x][y] = cell;
+		break;
+	}
+}
+
+/*
+Metoda cell ktora vracia hodnotu policka na poziciach x a y
+zadanych ako parametre.
+*/
 Game::Cell Game::cell(int x, int y) const {
 	return board[x][y];
 }
 
+/*
+Metoda selectedCell vracia par s oznacenym polickom
+*/
 std::pair<int, int> Game::selectedCell() const {
 	return std::make_pair(selectedX, selectedY);
 }
 
+/*
+Metoda isMyTurn() vracia true/false ci je hrac na tahu.
+*/
 bool Game::isMyTurn() const {
 	return myTurn;
 }
 
+/*
+Metoda isSinglePlayer() vracia true/false podla toho ci sme v singleplayeri
+alebo v multiplayeri.
+*/
 bool Game::isSinglePlayer() const {
 	return single;
 }
 
+/*
+Metoda setmode nastavuje mod hry (singleplayer alebo multiplayer) podla parametru
+typu boolean. 
+*/
 void Game::setMode(bool single) {
 	this->single = single;
 }
 
+/*
+Metoda setSide nastavuje stranu hraca.
+0 <=> false --> Cierna strana
+1 <=> true --> Biela strana.
+Metodou calcStones spocita pocet kamenov pre urcitu stranu.
+*/
 void Game::setSide(bool side) {
+
 	this->side = side == 0 ? SIDE_BLACK : SIDE_WHITE;
+	this->stones = calcStones((Cell)this->side);
+				
+	std::cout << stones << std::endl;
 }
 
+/*
+Metoda calcStone spocita pocet kamenov pre urciteho hraca/stranu.
+Vracia nam pocet kamenov.
+*/
+int Game::calcStones(Cell side) {
+	int stones = 0;
+	for (int x = 0; x < 8; x++) 
+		for (int y = 0; y < 8; y++)
+			if (board[x][y] == (Cell)side)
+				stones++;
+	return stones;
+}
+
+/*
+Nastavuje ci je hrac na tahu podla parametru
+*/
 void Game::setTurn(bool turn) {
 	this->myTurn = turn;
 }
 
+/*
+Metoda oznaci policko na pozicii x a y zadanych ako parametre.
+Testuje sa ci neoznacujeme mimo plochy alebo na policko obsahujuce cudzi kamen.
+Pri nedodrzani testovacej podmienky necha oznacene pozicie na -1 => ziadne oznacenie.
+*/
 void Game::selectCell(int x, int y) {
 	if ((x>=0)&&(x<8)&&(y<8)&&(y>=0)&&(board[x][y]==side)) {
 
@@ -56,6 +123,12 @@ void Game::selectCell(int x, int y) {
 	}
 }
 
+/*
+Metoda getLegalMoves vrati vsetky mozne legalne tahy pre hraca zadaneho parametrom Side (strana).
+Vsetky taketo tahy navrati do parametru moves predavaneho referenciou. Legalne tahy su take ktore
+idu do sikna o jedno policko s tym ze sa dodrzuje podmienka ze policko nie je mimo plochu a je prazdne.
+Dalsimi legalnymi tahmi su take kde preskakujeme nepriatela. Testovacia podmienka je rovnaka.
+*/
 void Game::getLegalMoves(Side side, std::vector<Move> &moves) const {
 
 	for (int x = 0; x < 8; x++)
@@ -104,10 +177,35 @@ void Game::getLegalMoves(Side side, std::vector<Move> &moves) const {
 			}				
 }
 
+/*
+Metoda moveOther pohybuje nepriatelovymi kamenmi. Za touto metodou nie je ziadna inteligencia prepocitavanim
+tahov. Na pohyb nam sluzi navrat moznych tahov a vybratie nejakeho nahodneho. 
+Ked nie su ziadne legalne tahy tak ukonci hru a prepocita kto ma viac jednotiek a podla toho vyhodnoti vitazstvo.
+Metoda sa vola iba pri singleplayeri.
+*/
 void Game::moveOther() {
 	Side other = side == SIDE_WHITE ? SIDE_BLACK : SIDE_WHITE;
 	std::vector<Move> legalMoves;
 	getLegalMoves(other, legalMoves);
+
+	if (legalMoves.empty()) {
+		hasEnded();
+		int x = calcStones((Cell)other);
+		if (x < stones) {				
+			setWinStatus(1);
+		}
+		if (x == stones) {			
+			setWinStatus(-1);
+		}
+		if (x > stones) {
+			setWinStatus(0);
+		}
+		
+		selectedX = -1;
+		selectedY = -1;
+		return;
+	}
+
 	Move & move = legalMoves[rand() % legalMoves.size()];
 	for (Move::iterator iter = move.begin(); iter != move.end(); iter++) {
 		board[iter->first.first][iter->first.second] = EMPTY;
@@ -122,6 +220,10 @@ void Game::moveOther() {
 
 }
 
+/*
+Metoda move pohne nepriatelovym kamenom. Parametrami sx a sy urci odkial sa pohybuje => tam nastavi prazdne policko 
+a parametrami ex a ey miesto kam sa kamen pohol. Podla strany hraca urci co za kamen je nepriatel.
+*/
 void Game::move(int sx, int sy, int ex, int ey) {
 
 	board[sx][sy] = EMPTY;
@@ -129,14 +231,57 @@ void Game::move(int sx, int sy, int ex, int ey) {
 
 }
 
+/*
+Metoda decStones znizuje pocet hracovych kamenov.
+*/
+void Game::decStones() {
+	stones--;
+}
+
+/*
+Metoda del vymaze miesto na ploche. Nastavenie na EMPTY.
+*/
 void Game::del(int x, int y) {
 	board[x][y] = EMPTY;
 }
 
+/*
+Metoda move volana z GameWindow ktora ma za ulohu pohyb hracovych kamenov. V prvom rade zistime 
+mozne legalne tahy. Ulozene su v premennej legalMoves. Ked neexistuje ziadne legalne tahy tak ked sme v multiplayeri
+tak odposle spravu o ukonceni, pri singleplayeri urci vitazstvo podla toho ci ma hrac alebo PC viac kamenov.
+Ked existuje legalny tah z miesta [selectedX,selectedY] na miesto [x,y] tak pohneme kamenom. V multiplayeri posielame spravu
+s prikazom MOVE. Ked bol tah typu preskakovanie nepriatela tak este posleme spravu typu DELETE. 
+Nakonci odoznacime vsetky kamene a poziadame o vykreslenie.
+*/
 void Game::move(int x, int y, std::vector<std::string> &msg) {
 
 	std::vector<Move> legalMoves;
 	getLegalMoves(side, legalMoves);
+
+	if (legalMoves.empty()) {
+		if (single) {
+			Side other = side == SIDE_WHITE ? SIDE_BLACK : SIDE_WHITE;
+			hasEnded();
+			int x = calcStones((Cell)other);
+			if (x < stones) {				
+				setWinStatus(1);
+			}
+			if (x == stones) {			
+				setWinStatus(-1);
+			}
+			if (x > stones) {
+				setWinStatus(0);
+			}
+			return;
+		} else {
+			std::stringstream ss;
+			ss << "FINAL " << stones;
+			msg.push_back(ss.str());
+			selectedX = -1;
+			selectedY = -1;
+			return;
+		}
+	}
 
 	Step step = Step(Pos(selectedX, selectedY),Pos(x, y));
 
@@ -164,4 +309,39 @@ void Game::move(int x, int y, std::vector<std::string> &msg) {
 	selectedX = -1;
 	selectedY = -1;
 	return ;
+}
+
+/*
+Metoda ukonci hru nastavenim premennej endGame na true.
+*/
+void Game::hasEnded() {
+	endGame = true;
+}
+
+/*
+Metoda isEnd vrati true/false podla toho ci je konec hry.
+*/
+bool Game::isEnd() {
+	return endGame;
+}
+
+/*
+Metoda getWinStatus vrati vitazny status. 0 - prehra, 1 - vyhra, -1 - remiza.
+*/
+int Game::getWinStatus() {
+	return winStatus;
+}
+
+/*
+Metoda setWinStatus nastavi vitazny status podla premennej status.
+*/
+void Game::setWinStatus(int status) {
+	winStatus = status;
+}
+
+/*
+Metoda getStones vrati pocet kamenov na ploche.
+*/
+int Game::getStones() {
+	return stones;
 }

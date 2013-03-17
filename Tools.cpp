@@ -8,9 +8,7 @@ using namespace std;
 /**
 * Singleton trieda TextTools. Ma za ulohu vsetky operacie s textom.
 * Pomocou metody getInstance ziskame instanciu TextTool. Ziskavame hu tak ze definujeme staticku
-* premennu instance. Vyhoda tohoto je ze object nie je vytvoreny do zavolania tejto metody.
-* Keby bola definovana v private bloku staticka premenna tak ako vieme staticke premenne
-* sa vytvaraju pri zapnuti hry.
+* premennu instance.
 */
 class Tools {
 

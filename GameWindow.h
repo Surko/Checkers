@@ -3,6 +3,10 @@
 #include "Game.h"
 #include "Tools.cpp"
 
+/*
+Zdedena tried od Window ktora zabezpecuje funkcie hlavnej hry. Je to ako keby
+Kontajner pre Game
+*/
 class GameWindow : public Window {
 
 public :
@@ -15,5 +19,6 @@ public :
 	void sendMsg(string & msg);
 	string toString();
 private : 
+	// Object Game s hlavnou hrou
 	Game game;
 };

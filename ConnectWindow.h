@@ -2,9 +2,15 @@
 #include "Tools.cpp"
 #include <string>
 
+// Host na koreho sa napajame, mozne zmenit na nacitavanie z txt suboru
+// alebo nacitanie priamo z hry.
 static const char * hostname = "127.0.0.1";
+// Port na ktorom hra bezi
 static const int port = 5000;
 
+/*
+Zdedena trieda od Window. ConnectWindow - okno pri napajani na server.
+*/
 class ConnectWindow : public Window {
 
 public :
@@ -16,6 +22,10 @@ public :
 	int tryConnect();
 	string toString();
 private :
+	// Pole pre text ktory sa zobrazuje na obrazovke pri napajani alebo cakani na server.
 	std::string text[4];
+	// Stav ktory text vypisujeme
 	int wheelCount;
+	// Strana za ktoru budeme hrat.
+	int side;
 };
